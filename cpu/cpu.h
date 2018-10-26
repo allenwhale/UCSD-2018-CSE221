@@ -19,6 +19,10 @@ double syscall_getpid_overhead(int);
 double create_process_overhead(int);
 void* thread_function(void*);
 double create_thread_overhead(int);
+long long process_context_switch_once_overhead();
+double process_context_switch_overhead(int);
+long long thread_context_switch_once_overhead();
+double thread_context_switch_overhead(int);
 
 
 #endif

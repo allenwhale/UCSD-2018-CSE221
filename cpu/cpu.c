@@ -2,12 +2,22 @@
 #include "utils.h"
 #include <pthread.h>
 
+
+long long now(){
+    struct timeval t;
+
+    gettimeofday(&t, NULL);
+    return (long long)t.tv_sec * 1000000ll + t.tv_usec;
+}
+
 double measure_overhead(int times){
     double total = 0.;
 
     for (int i = 0; i < times; i++) {
-        long long start = my_rdtsc();
-        long long end = my_rdtsc();
+		// long long start = my_rdtsc();
+		// long long end = my_rdtsc();
+        long long start = now();
+        long long end = now();
         total += end - start;
     }
     return total / (double)times;
@@ -166,4 +176,21 @@ double create_thread_overhead(int times){
         total += end - start;
     }
     return total / (double)times;
+}
+
+long long process_context_switch_once_overhead(){
+    int fd[2];
+    long long start, end;
+
+    pipe(fd);
+    if (fork() == 0) {
+        end = my_rdtsc();
+        write(fd[1], &end, sizeof(end));
+        exit(0);
+    }else{
+        start = my_rdtsc();
+        wait(0);
+        read(fd[0], &end, sizeof(end));
+    }
+    return end - start;
 }

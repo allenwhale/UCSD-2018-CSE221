@@ -1,5 +1,5 @@
 CC=gcc
-BASEFLAGS := -Wall -Werror -O -g
+BASEFLAGS := -Wall -Werror -O0 -g
 CFLAGS := $(BASEFLAGS) -ffreestanding -nostdlib -nostdinc -fno-builtin \
         -mno-red-zone -fno-stack-protector
 CFLAGS+= -I. -I ../ -I ../../c/include -std=gnu11 -fPIC
