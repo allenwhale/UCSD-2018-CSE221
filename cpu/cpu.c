@@ -3,21 +3,13 @@
 #include <pthread.h>
 
 
-long long now(){
-    struct timeval t;
-
-    gettimeofday(&t, NULL);
-    return (long long)t.tv_sec * 1000000ll + t.tv_usec;
-}
 
 double measure_overhead(int times){
     double total = 0.;
 
     for (int i = 0; i < times; i++) {
-		// long long start = my_rdtsc();
-		// long long end = my_rdtsc();
-        long long start = now();
-        long long end = now();
+        long long start = my_rdtsc();
+        long long end = my_rdtsc();
         total += end - start;
     }
     return total / (double)times;
@@ -186,11 +178,61 @@ long long process_context_switch_once_overhead(){
     if (fork() == 0) {
         end = my_rdtsc();
         write(fd[1], &end, sizeof(end));
+        close(fd[0]), close(fd[1]);
         exit(0);
     }else{
         start = my_rdtsc();
         wait(0);
         read(fd[0], &end, sizeof(end));
+        close(fd[0]), close(fd[1]);
     }
     return end - start;
+}
+
+double process_context_switch_overhead(int times){
+    int i = 0;
+    double total = 0.;
+
+    while (i < times) {
+        int res = process_context_switch_once_overhead();
+        if (res > 0) {
+            total += res;
+            i++;
+        }
+    }
+    return total / (double)times;
+}
+void* thread_context_switch(void *arg){
+    int *fd = (int*)arg;
+    long long end = my_rdtsc();
+
+
+    write(fd[1], &end, sizeof(end));
+    pthread_exit(0);
+}
+long long thread_context_switch_once_overhead(){
+    long long start, end = 1;
+    int fd[2];
+    pthread_t tid;
+
+    pipe(fd);
+    pthread_create(&tid, 0, thread_context_switch, (void*)fd);
+    start = my_rdtsc();
+    pthread_join(tid, 0);
+    read(fd[0], &end, sizeof(end));
+    close(fd[0]), close(fd[1]);
+    return end - start;
+}
+double thread_context_switch_overhead(int times){
+    int i = 0;
+    double total = 0.;
+
+    while (i < times) {
+        int res = thread_context_switch_once_overhead();
+        if (res > 0) {
+            total += res;
+            i++;
+        }
+    }
+    return total / (double)times;
 }

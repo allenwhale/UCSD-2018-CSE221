@@ -1,4 +1,8 @@
 #include "utils.h"
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <time.h>
 
 long long my_rdtsc(){
     struct timeval t;
