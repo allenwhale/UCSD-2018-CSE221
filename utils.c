@@ -1,6 +1,10 @@
 #include "utils.h"
 
 long long my_rdtsc(){
+    struct timeval t;
+
+    gettimeofday(&t, NULL);
+    return (long long)t.tv_sec * 1000000ll + t.tv_usec;
     int lo, hi;
 
     __asm__ __volatile__ (
