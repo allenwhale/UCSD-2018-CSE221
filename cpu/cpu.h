@@ -1,7 +1,7 @@
 #ifndef __CPU__H__
 #define __CPU__H__
 
-// #include "litc.h"
+#include "litc.h"
 
 double measure_overhead(int);
 double loop_overhead(int);

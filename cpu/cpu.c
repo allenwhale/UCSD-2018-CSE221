@@ -17,8 +17,9 @@ double measure_overhead(int times){
 double loop_overhead(int times){
     long long start = my_rdtsc();
 
-    for (int i = 0; i < times; i++);
+	// for (int i = 0; i < times; i++);
     long long end = my_rdtsc();
+
     return (double)(end - start) / (double)times;
 }
 void test0(){
@@ -206,9 +207,8 @@ void* thread_context_switch(void *arg){
     int *fd = (int*)arg;
     long long end = my_rdtsc();
 
-
     write(fd[1], &end, sizeof(end));
-    pthread_exit(0);
+    return NULL;
 }
 long long thread_context_switch_once_overhead(){
     long long start, end = 1;

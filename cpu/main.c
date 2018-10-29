@@ -2,8 +2,10 @@
 #include "utils.h"
 
 int main(void){
-    printf("%f\n", loop_overhead(100000));
-    printf("%f\n", measure_overhead(100000));
+    printf("%f\n", loop_overhead(1));
+    printf("%f\n", measure_overhead(1));
+    printf("%f\n", measure_overhead(10));
+    return 0;
     double ans[10];
     procedure_call_overhead(100000, ans);
     for (int i = 0; i < 7; i++)
