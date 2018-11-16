@@ -24,5 +24,4 @@ double process_context_switch_overhead(int);
 long long thread_context_switch_once_overhead();
 double thread_context_switch_overhead(int);
 
-
 #endif
