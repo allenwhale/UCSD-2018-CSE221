@@ -2,8 +2,6 @@
 #include "mem.h"
 #include "utils.h"
 
-long long max(long long a, long long b) { return a > b ? a : b; }
-
 void memory_access_runner() {
   for (int j = 4; j < 11; j += 2) {
     for (int i = 4; i < 15; ++i) {
