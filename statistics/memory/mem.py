@@ -26,5 +26,27 @@ def memorylatency():
     # plt.show()
 
 
+def memrwLatency():
+    FILENAME = 'mem_rw_latency'
+    data = list(map(float, open(FILENAME, 'r').readlines()))
+    fig = plt.figure()
+    rdata = data[:100]
+    wdata = data[100:]
+    sns.kdeplot(
+        rdata, label=f'read(B/us): mean({round(np.mean(rdata), 6)}), std({round(np.std(rdata), 6)})')
+    sns.kdeplot(
+        wdata, label=f'write(B/us): mean({round(np.mean(wdata), 6)}), std({round(np.std(wdata), 6)})')
+    fig.savefig(f'{FILENAME}.png')
+
+
+def pagefaultLatency():
+    FILENAME = 'mem_pagefault_latency'
+    data = list(map(float, open(FILENAME, 'r').readlines()))
+    fig = plt.figure()
+    sns.kdeplot(
+        data, label=f'pagefault(us): mean({round(np.mean(data), 6)}), std({round(np.std(data), 6)})')
+    fig.savefig(f'{FILENAME}.png')
+
+
 if __name__ == '__main__':
-    memorylatency()
+    memrwLatency()

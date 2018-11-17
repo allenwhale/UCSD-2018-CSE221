@@ -21,6 +21,7 @@ double memory_access_latency(int mem_size, int step_size, int times) {
 
 // mem_size Kbytes
 double memory_read_bandwidth(int mem_size, int times) {
+  mem_size *= 1024;
   char *mem = (char *)malloc(sizeof(char) * mem_size);
 
   for (int i = 0; i < mem_size; i++) {
@@ -49,6 +50,7 @@ double memory_read_bandwidth(int mem_size, int times) {
 
 // mem_size Kbytes
 double memory_write_bandwidth(int mem_size, int times) {
+  mem_size *= 1024;
   char *mem = (char *)malloc(sizeof(char) * mem_size);
   long long start = my_rdtsc();
 

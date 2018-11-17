@@ -33,7 +33,50 @@ void memory_access_runner() {
   }
 }
 
+void bandwidth_runner() {
+  // testing 8MB,
+  int times = 100;
+  long long mem_size = 1 << 13;
+  for (int k = 0; k < times + 4; ++k) {
+    if (fork() == 0) {
+      if (k >= 4) {
+        printf("%f\n", memory_read_bandwidth(mem_size, 1));
+      }
+      exit(0);
+    } else {
+      wait(0);
+    }
+  }
+
+  for (int k = 0; k < times + 4; ++k) {
+    if (fork() == 0) {
+      if (k >= 4) {
+        printf("%f\n", memory_write_bandwidth(mem_size, 1));
+      }
+      exit(0);
+    } else {
+      wait(0);
+    }
+  }
+}
+
+void pagefault_runner() {
+  // testing 8MB,
+  int times = 100;
+  long long mem_size = 1 << 13;
+  for (int k = 0; k < times + 4; ++k) {
+    if (fork() == 0) {
+      if (k >= 4) {
+        printf("%f\n", memory_pagefault(mem_size, 1));
+      }
+      exit(0);
+    } else {
+      wait(0);
+    }
+  }
+}
+
 int main() {
-  memory_access_runner();
+  bandwidth_runner();
   return 0;
 }
