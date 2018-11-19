@@ -5,9 +5,9 @@
 void memory_access_runner() {
   for (int j = 4; j < 11; j += 2) {
     for (int i = 4; i < 15; ++i) {
-      double latency = 0;
       int times = 100;
-      for (int k = 0; k < times + 4; ++k) {
+      double latency[100];
+      for (int k = 0; k < times; ++k) {
         int fd[2];
         double l;
         pipe(fd);
@@ -15,7 +15,7 @@ void memory_access_runner() {
           long long mem_size = 1 << i;
           long long stride = 1 << j;
           l = memory_access_latency(mem_size, stride,
-                                    max(10000, mem_size / stride));
+                                    max(1000, mem_size / stride));
           write(fd[1], &l, sizeof(l));
           for (int m = 0; m < 2; ++m) close(fd[m]);
           exit(0);
@@ -23,12 +23,16 @@ void memory_access_runner() {
           wait(0);
           read(fd[0], &l, sizeof(l));
           for (int m = 0; m < 2; ++m) close(fd[m]);
-          if (k >= 4) {
-            latency += l;
-          }
+          latency[k] = l;
         }
       }
-      printf("%f\n", latency / times);
+      // ignore outliers (perhaps because of GC)
+      sort(latency, 100);
+      double suml = 0;
+      for (int m = 25; m < 75; ++m) {
+        suml += latency[m];
+      }
+      printf("%f\n", suml / 50);
     }
   }
 }
@@ -77,6 +81,6 @@ void pagefault_runner() {
 }
 
 int main() {
-  bandwidth_runner();
+  memory_access_runner();
   return 0;
 }

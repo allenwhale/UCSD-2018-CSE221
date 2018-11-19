@@ -19,9 +19,9 @@ def memorylatency():
         sns.lineplot(x=np.arange(size), y=y,
                      label=f"stride-{1 << (strides[i // size])} B")
     plt.axvline(x=1, color='#BCBBBB', linestyle='--')
-    plt.text(0.8, 0.5, 'L1 Cache Size', rotation=90)
+    plt.text(0.8, 0.1, 'L1 Cache Size', rotation=90)
     plt.axvline(x=4, color='#000F1C', linestyle='--')
-    plt.text(3.8, 0.5, 'L2 Cache Size', rotation=90)
+    plt.text(3.8, 0.1, 'L2 Cache Size', rotation=90)
     fig.savefig(f'{FILENAME}.png')
     # plt.show()
 
@@ -49,4 +49,4 @@ def pagefaultLatency():
 
 
 if __name__ == '__main__':
-    memrwLatency()
+    memorylatency()
