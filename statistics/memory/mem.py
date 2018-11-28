@@ -27,15 +27,9 @@ def memorylatency():
 
 
 def memrwLatency():
-    FILENAME = 'mem_rw_latency'
+    FILENAME = 'mem_rw_latency_steps'
     data = list(map(float, open(FILENAME, 'r').readlines()))
     fig = plt.figure()
-    rdata = data[:100]
-    wdata = data[100:]
-    sns.kdeplot(
-        rdata, label=f'read(B/us): mean({round(np.mean(rdata), 6)}), std({round(np.std(rdata), 6)})')
-    sns.kdeplot(
-        wdata, label=f'write(B/us): mean({round(np.mean(wdata), 6)}), std({round(np.std(wdata), 6)})')
     fig.savefig(f'{FILENAME}.png')
 
 
