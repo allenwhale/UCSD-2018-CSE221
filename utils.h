@@ -6,4 +6,6 @@
 
 long long my_rdtsc();
 
+void sort(double*, int);
+
 #endif

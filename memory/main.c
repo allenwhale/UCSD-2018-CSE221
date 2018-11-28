@@ -1,40 +1,86 @@
-#include "utils.h"
+#include "litc.h"
 #include "mem.h"
-int main(){
-	// printf("%f\n", memory_access_latency(4, 16, 10000));
-	// for (int i = 4; i <= 18; i++ ) {
-	//     double sum = 0;
-	//     int times = 50;
-	//     for (int k = 0; k < times + 4; k++) {
-	//         double n = memory_access_latency(1 << i, 64, 10000);
-	//         if (k > 4) sum += n;
-	//     }
-	//     printf("%f\n", sum / times);
-	// }
-	// printf("%f\n", memory_write_bandwidth(1 << 23, 10));
-	// printf("%d\n", getpagesize());
-	// printf("%f\n", memory_pagefault(8 << 10, 10));
-    int times = 20;
+#include "utils.h"
 
-    for (int j = 10; j <= 12; j += 2) {
-        for (int i = 4; i <= 18; i++) {
-            double sum = 0;
-            for (int k = 0; k < times; k++) {
-                int fd[2];
-                pipe(fd);
-                if (fork() == 0) {
-                    double l = memory_access_latency(1 << i, 1 << j, max(10000, 2 << (i + 10 - j)));
-                    write(fd[1], &l, sizeof(l));
-                    exit(0);
-                }else{
-                    double l;
-                    read(fd[0], &l, sizeof(l));
-                    sum += l;
-                }
-                close(fd[0]); close(fd[1]);
-            }
-            printf("%d %d %f\n", i, j, sum / times);
+void memory_access_runner() {
+  for (int j = 4; j < 11; j += 2) {
+    for (int i = 4; i < 15; ++i) {
+      int times = 100;
+      double latency[100];
+      for (int k = 0; k < times; ++k) {
+        int fd[2];
+        double l;
+        pipe(fd);
+        if (fork() == 0) {
+          long long mem_size = 1 << i;
+          long long stride = 1 << j;
+          l = memory_access_latency(mem_size, stride,
+                                    max(1000, mem_size / stride));
+          write(fd[1], &l, sizeof(l));
+          for (int m = 0; m < 2; ++m) close(fd[m]);
+          exit(0);
+        } else {
+          wait(0);
+          read(fd[0], &l, sizeof(l));
+          for (int m = 0; m < 2; ++m) close(fd[m]);
+          latency[k] = l;
         }
+      }
+      // ignore outliers (perhaps because of GC)
+      sort(latency, 100);
+      double suml = 0;
+      for (int m = 25; m < 75; ++m) {
+        suml += latency[m];
+      }
+      printf("%f\n", suml / 50);
     }
-    return 0;
+  }
+}
+
+void bandwidth_runner() {
+  // testing 8MB,
+  int times = 100;
+  long long mem_size = 1 << 13;
+  for (int k = 0; k < times + 4; ++k) {
+    if (fork() == 0) {
+      if (k >= 4) {
+        printf("%f\n", memory_read_bandwidth(mem_size, 1));
+      }
+      exit(0);
+    } else {
+      wait(0);
+    }
+  }
+
+  for (int k = 0; k < times + 4; ++k) {
+    if (fork() == 0) {
+      if (k >= 4) {
+        printf("%f\n", memory_write_bandwidth(mem_size, 1));
+      }
+      exit(0);
+    } else {
+      wait(0);
+    }
+  }
+}
+
+void pagefault_runner() {
+  // testing 8MB,
+  int times = 100;
+  long long mem_size = 1 << 13;
+  for (int k = 0; k < times + 4; ++k) {
+    if (fork() == 0) {
+      if (k >= 4) {
+        printf("%f\n", memory_pagefault(mem_size, 1));
+      }
+      exit(0);
+    } else {
+      wait(0);
+    }
+  }
+}
+
+int main() {
+  memory_access_runner();
+  return 0;
 }
