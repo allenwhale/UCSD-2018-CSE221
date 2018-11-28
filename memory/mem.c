@@ -45,7 +45,6 @@ double memory_read_bandwidth(int mem_size, int times) {
     }
   }
   long long end = my_rdtsc();
-  free(mem);
   return (double)(times * mem_size) / (double)(end - start);
 }
 
