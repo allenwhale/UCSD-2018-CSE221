@@ -63,7 +63,7 @@ void bandwidth_runner() {
       }
     }
     sort(bandwidth, TIMES);
-    double sum = 0;
+    sum = 0;
     for (int m = 25; m < 75; ++m) {
       sum += bandwidth[m];
     }
