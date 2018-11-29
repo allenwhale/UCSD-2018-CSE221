@@ -39,35 +39,35 @@ void memory_access_runner() {
 
 void bandwidth_runner() {
 // testing 8MB,
-#define TIMES 100
+#define TIMES 10
   long long mem_size = 1 << 13;
   double bandwidth[TIMES];
-  for (int s = 1; s < 7; s++) {
+  for (int s = 1; s <= 64; s <<= 1) {
     for (int k = 0; k < TIMES + 4; ++k) {
       if (k >= 4) {
-        bandwidth[k - 4] = memory_read_bandwidth(mem_size, 1 << s, 1);
+        bandwidth[k - 4] = memory_read_bandwidth(mem_size, s, 1);
       }
     }
     sort(bandwidth, TIMES);
     double sum = 0;
-    for (int m = 25; m < 75; ++m) {
+    for (int m = 3; m < 8; ++m) {
       sum += bandwidth[m];
     }
-    printf("%f\n", sum / 50);
+    printf("%f\n", sum / 5);
   }
 
-  for (int s = 1; s < 7; s++) {
+  for (int s = 1; s <= 64; s <<= 1) {
     for (int k = 0; k < TIMES + 4; ++k) {
       if (k >= 4) {
-        bandwidth[k - 4] = memory_write_bandwidth(mem_size, 1 << s, 1);
+        bandwidth[k - 4] = memory_write_bandwidth(mem_size, s, 1);
       }
     }
     sort(bandwidth, TIMES);
-    sum = 0;
-    for (int m = 25; m < 75; ++m) {
+    double sum = 0;
+    for (int m = 3; m < 8; ++m) {
       sum += bandwidth[m];
     }
-    printf("%f\n", sum / 50);
+    printf("%f\n", sum / 5);
   }
 }
 

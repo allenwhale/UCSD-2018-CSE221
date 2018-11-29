@@ -4,6 +4,9 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <algorithm>
+#include <vector>
+using namespace std;
 
 long long my_rdtsc() {
   struct timeval t;
@@ -12,118 +15,119 @@ long long my_rdtsc() {
   return (long long)t.tv_sec * 1000000ll + t.tv_usec;
 }
 
-double memory_read_bandwidth(int mem_size, int times) {
-  mem_size <<= 8;
-  int *mem = (int *)malloc(sizeof(int) * mem_size);
+#define RP0(i, s) p[i + s]
+#define RP1(i, s) RP0(i, s) + RP0(i + 1 * s, s)
+#define RP2(i, s) RP1(i, s) + RP1(i + 2 * s, s)
+#define RP3(i, s) RP2(i, s) + RP2(i + 4 * s, s)
+#define RP4(i, s) RP3(i, s) + RP3(i + 8 * s, s)
+#define RP5(i, s) RP4(i, s) + RP4(i + 16 * s, s)
+#define RP6(i, s) RP5(i, s) + RP5(i + 32 * s, s)
+#define RP7(i, s) RP6(i, s) + RP6(i + 64 * s, s)
+// mem_size Kbytes
+double memory_read_bandwidth(long long mem_size, long long step,
+                             long long times) {
+  mem_size <<= 10;
+  char *mem = (char *)malloc(sizeof(char) * mem_size);
 
   for (int i = 0; i < mem_size; i++) {
     mem[i] = rand();
   }
   long long start = my_rdtsc();
-  for (int i = 0; i < times; i++) {
-    int *p = mem;
+  for (int i = 0; i < times * step; i++) {
+    char *p = mem;
     int sum = 0;
-    while (p < mem + mem_size) {
-      sum += p[0] + p[2] + p[4] + p[6] + p[8] + p[10] + p[12] + p[14] + p[16] +
-             p[18] + p[20] + p[22] + p[24] + p[26] + p[28] + p[30] + p[32] +
-             p[34] + p[36] + p[38] + p[40] + p[42] + p[44] + p[46] + p[48] +
-             p[50] + p[52] + p[54] + p[56] + p[58] + p[60] + p[62] + p[64] +
-             p[66] + p[68] + p[70] + p[72] + p[74] + p[76] + p[78] + p[80] +
-             p[82] + p[84] + p[86] + p[88] + p[90] + p[92] + p[94] + p[96] +
-             p[98] + p[100] + p[102] + p[104] + p[106] + p[108] + p[110] +
-             p[112] + p[114] + p[116] + p[118] + p[120] + p[122] + p[124] +
-             p[126];
+    while (p + 127 < mem + mem_size) {
+      if (step == 1) {
+        sum += RP7(0, 1);
+      } else if (step == 2) {
+        sum += RP6(0, 2);
+      } else if (step == 4) {
+        sum += RP5(0, 4);
+      } else if (step == 8) {
+        sum += RP4(0, 8);
+      } else if (step == 16) {
+        sum += RP3(0, 16);
+      } else if (step == 32) {
+        sum += RP2(0, 32);
+      } else if (step == 64) {
+        sum += RP1(0, 64);
+      }
       p += 128;
     }
   }
   long long end = my_rdtsc();
-  return (double)(times * mem_size * 4 / 2) / (double)(end - start);
+  free(mem);
+  return (double)(times * mem_size) / (double)(end - start);
 }
 
+#define WP0(i, s) p[i] = i;
+#define WP1(i, s) WP0(i, s) WP0(i + 1 * s, s)
+#define WP2(i, s) WP1(i, s) WP1(i + 2 * s, s)
+#define WP3(i, s) WP2(i, s) WP2(i + 4 * s, s)
+#define WP4(i, s) WP3(i, s) WP3(i + 8 * s, s)
+#define WP5(i, s) WP4(i, s) WP4(i + 16 * s, s)
+#define WP6(i, s) WP5(i, s) WP5(i + 32 * s, s)
+#define WP7(i, s) WP6(i, s) WP6(i + 64 * s, s)
 // mem_size Kbytes
-double memory_write_bandwidth(int mem_size, int times) {
-  mem_size <<= 8;
-  int *mem = (int *)malloc(sizeof(int) * mem_size);
+double memory_write_bandwidth(long long mem_size, long long step,
+                              long long times) {
+  mem_size <<= 10;
+  char *mem = (char *)malloc(sizeof(char) * mem_size);
   long long start = my_rdtsc();
 
-  for (int i = 0; i < times; i++) {
-    int *p = mem;
-    while (p < mem + mem_size) {
-      p[0] = 0;
-      p[2] = 2;
-      p[4] = 4;
-      p[6] = 6;
-      p[8] = 8;
-      p[10] = 10;
-      p[12] = 12;
-      p[14] = 14;
-      p[16] = 16;
-      p[18] = 18;
-      p[20] = 20;
-      p[22] = 22;
-      p[24] = 24;
-      p[26] = 26;
-      p[28] = 28;
-      p[30] = 30;
-      p[32] = 32;
-      p[34] = 34;
-      p[36] = 36;
-      p[38] = 38;
-      p[40] = 40;
-      p[42] = 42;
-      p[44] = 44;
-      p[46] = 46;
-      p[48] = 48;
-      p[50] = 50;
-      p[52] = 52;
-      p[54] = 54;
-      p[56] = 56;
-      p[58] = 58;
-      p[60] = 60;
-      p[62] = 62;
-      p[64] = 64;
-      p[66] = 66;
-      p[68] = 68;
-      p[70] = 70;
-      p[72] = 72;
-      p[74] = 74;
-      p[76] = 76;
-      p[78] = 78;
-      p[80] = 80;
-      p[82] = 82;
-      p[84] = 84;
-      p[86] = 86;
-      p[88] = 88;
-      p[90] = 90;
-      p[92] = 92;
-      p[94] = 94;
-      p[96] = 96;
-      p[98] = 98;
-      p[100] = 100;
-      p[102] = 102;
-      p[104] = 104;
-      p[106] = 106;
-      p[108] = 108;
-      p[110] = 110;
-      p[112] = 112;
-      p[114] = 114;
-      p[116] = 116;
-      p[118] = 118;
-      p[120] = 120;
-      p[122] = 122;
-      p[124] = 124;
-      p[126] = 126;
+  for (int i = 0; i < times * step; i++) {
+    char *p = mem;
+    while (p + 127 < mem + mem_size) {
+      if (step == 1) {
+        WP7(0, 1);
+      } else if (step == 2) {
+        WP6(0, 2);
+      } else if (step == 4) {
+        WP5(0, 4);
+      } else if (step == 8) {
+        WP4(0, 8);
+      } else if (step == 16) {
+        WP3(0, 16);
+      } else if (step == 32) {
+        WP2(0, 32);
+      } else if (step == 64) {
+        WP1(0, 64);
+      }
       p += 128;
     }
   }
   long long end = my_rdtsc();
-  return (double)(times * mem_size * 4 / 2) / (double)(end - start);
+  free(mem);
+  return (double)(times * mem_size) / (double)(end - start);
 }
+
 int main(int argc, char const *argv[]) {
-  long long mem_size = 1 << 14;
-  // for (int k = 0; k < 10; ++k) {
-  printf("R %f\n", memory_read_bandwidth(mem_size, 100));
-  printf("W %f\n", memory_write_bandwidth(mem_size, 100));
-  // }
+  long long mem_size = 1 << 13;
+  int times = 100;
+  for (int s = 1; s <= 64; s <<= 1) {
+    vector<double> v;
+    for (int k = 0; k < times; ++k) {
+      v.push_back(memory_read_bandwidth(mem_size, s, 1));
+    }
+    sort(v.begin(), v.end());
+    double sum = 0;
+    for (int i = 25; i < 75; ++i) {
+      sum += v[i];
+    }
+    printf("%f\n", sum / 50);
+  }
+
+  for (int s = 1; s <= 64; s <<= 1) {
+    vector<double> v;
+    for (int k = 0; k < times; ++k) {
+      v.push_back(memory_write_bandwidth(mem_size, s, 1));
+    }
+    sort(v.begin(), v.end());
+    double sum = 0;
+    for (int i = 25; i < 75; ++i) {
+      sum += v[i];
+    }
+    printf("%f\n", sum / 50);
+  }
   return 0;
 }
