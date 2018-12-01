@@ -30,23 +30,22 @@ void echo_server(int port){
     }
     int clientfd;
     socklen_t slen = sizeof(sin);
-    if ((clientfd = accept(sockfd, (struct sockaddr *)&sin, &slen)) < 0) {
-        perror("client");
-        return;
+    char *buf = (char*)malloc(sizeof(char) << 20);
+    while ((clientfd = accept(sockfd, (struct sockaddr *)&sin, &slen)) > 0) {
+        int ret;
+        while ((ret = read(clientfd, buf, 1 << 20)) > 0) {
+            write(clientfd, buf, ret * sizeof(char));
+        }
+        close(clientfd);
     }
     close(sockfd);
-    char *buf = (char*)malloc(sizeof(char) * 100);
-    int ret;
-    while ((ret = read(clientfd, buf, 100)) > 0) {
-        write(clientfd, buf, ret * sizeof(char));
-    }
-    close(clientfd);
     free(buf);
 }
 
 double round_trip_time(char const *host, int port, int bytes, int times){
     char *msg = (char*)malloc(sizeof(char) * bytes);
     char *buf = (char*)malloc(sizeof(char) * bytes);
+
 
     memset(msg, 'a', sizeof(char) * bytes);
     struct sockaddr_in server;
@@ -62,16 +61,23 @@ double round_trip_time(char const *host, int port, int bytes, int times){
         perror("connect");
         return 0;
     }
-
-    long long start = my_rdtsc();
-    for (int i = 0; i < times; i++) {
+    long long *overhead = (long long*)malloc(sizeof(long long) * (times + 20));
+    for (int i = 0; i < times + 20; i++) {
+        long long start = my_rdtsc();
         write(sockfd, msg, bytes);
         read(sockfd, buf, bytes);
+        long long end = my_rdtsc();
+        overhead[i] = end - start;
     }
-    long long end = my_rdtsc();
+    qsort(overhead, times + 20, sizeof(long long), cmp_ll);
+    double res = 0;
+    for (int i = 10; i < times + 10; i++) {
+        res += (double)overhead[i] / times;
+    }
+    free(overhead);
     free(msg);
     free(buf);
-    return (double)(end - start) / times;
+    return res;
 }
 double bandwidth_write(const char *host, int port, int bytes, int times){
     struct sockaddr_in server;
@@ -90,14 +96,23 @@ double bandwidth_write(const char *host, int port, int bytes, int times){
     }
     char *msg = (char*)malloc(sizeof(char) * bytes);
     memset(msg, 'a', sizeof(char) * bytes);
-    long long start = my_rdtsc();
-    for (int i = 0; i < times; i++) {
+    long long *overhead = (long long*)malloc(sizeof(long long) * (times + 20));
+    for (int i = 0; i < times + 20; i++) {
+        long long start = my_rdtsc();
         write(sockfd, msg, sizeof(char) * bytes);
+        long long end = my_rdtsc();
+        overhead[i] = end - start;
     }
-    long long end = my_rdtsc();
+    qsort(overhead, times + 20, sizeof(long long), cmp_ll);
+    double res = 0;
+    for (int i = 10; i < times + 10; i++) {
+        res += (double)bytes / (double)(overhead[i] * times);
+		// printf("%d %lld %f\n", bytes, overhead[i], (double)bytes / (double)(overhead[i] * times));
+    }
+    free(overhead);
     free(msg);
     close(sockfd);
-    return (double)(bytes * times) / (end - start);
+    return res;
 }
 double bandwidth_read(int port, int bytes){
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -126,10 +141,10 @@ double bandwidth_read(int port, int bytes){
         return 0;
     }
     close(sockfd);
-    char *buf = (char*)malloc(sizeof(char) * 100);
+    char *buf = (char*)malloc(sizeof(char) * bytes );
     int ret, sum = 0;
     long long start = my_rdtsc();
-    while ((ret = read(clientfd, buf, 100)) > 0) {
+    while ((ret = read(clientfd, buf, bytes)) > 0) {
         sum += ret;
     }
     long long end = my_rdtsc();
@@ -163,9 +178,11 @@ void multi_connection_server(int port){
     close(sockfd);
 }
 setup_teardown setup_teardown_overhead(const char *host, int port, int times){
-    int *fds = (int*)malloc(sizeof(int) * times);
-    int *connect_ret = (int*)malloc(sizeof(int) * times);
-    int *close_ret = (int*)malloc(sizeof(int) * times);
+    int *fds = (int*)malloc(sizeof(int) * (times + 20));
+    int *connect_ret = (int*)malloc(sizeof(int) * (times + 20));
+    int *close_ret = (int*)malloc(sizeof(int) * (times + 20));
+    long long *overhead_setup = (long long*)malloc(sizeof(long long) * (times + 20));
+    long long *overhead_teardown = (long long*)malloc(sizeof(long long) * (times + 20));
 
     struct sockaddr_in server;
 
@@ -173,23 +190,33 @@ setup_teardown setup_teardown_overhead(const char *host, int port, int times){
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
     long long start, end;
-    start = my_rdtsc();
-    for (int i = 0; i < times; i++) {
+    for (int i = 0; i < times + 20; i++) {
+        start = my_rdtsc();
         fds[i] = socket(AF_INET, SOCK_STREAM, 0);
         connect_ret[i] = connect(fds[i], (struct sockaddr *)&server, sizeof(server));
+        end = my_rdtsc();
+        overhead_setup[i] = end - start;
     }
-    end = my_rdtsc();
-    double setup = (double)(end - start) / times;
-    start = my_rdtsc();
-    for (int i = 0; i < times; i++) {
+    for (int i = 0; i < times + 20; i++) {
+        start = my_rdtsc();
         close_ret[i] = close(fds[i]);
+        end = my_rdtsc();
+        overhead_teardown[i] = end - start;
     }
-    end = my_rdtsc();
-    for (int i = 0; i < times; i++) {
-        if (connect_ret[i] < 0) perror("connect");
-        if (close_ret[i] < 0) perror("close");
+    for (int i = 0; i < times + 20; i++) {
+        if (connect_ret[i] != 0) perror("connect");
+        if (close_ret[i] != 0) perror("close");
     }
-    double teardown = (double)(end - start) / times;
+    qsort(overhead_setup, times + 20, sizeof(long long), cmp_ll);
+    double setup = 0;
+    for (int i = 10; i < times + 10; i++) {
+        setup += (double)overhead_setup[i] / times;
+    }
+    qsort(overhead_teardown, times + 20, sizeof(long long), cmp_ll);
+    double teardown = 0;
+    for (int i = 10; i < times + 10; i++) {
+        teardown += (double)overhead_teardown[i] / times;
+    }
     setup_teardown ret;
     ret.setup = setup;
     ret.teardown = teardown;
