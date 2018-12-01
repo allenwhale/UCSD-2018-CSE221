@@ -1,7 +1,6 @@
 #include "fs.h"
 
-double file_read_time(char* buf, long long size, int times) {
-  printf("Size: %lld\n", size);
+double file_read_time(char *buf, long long size, int times) {
   char filename[] = "fsbench";
   // Create file of size (B)
   int fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, (mode_t)0600);
@@ -23,19 +22,84 @@ double file_read_time(char* buf, long long size, int times) {
   }
   close(fd);
 
-  long long duration = 1;
-  for (int i = 0; i < times; ++i) {
+  long long *rbw = (long long *)malloc(sizeof(long long) * (times + 20));
+
+  for (int i = 0; i < times + 20; ++i) {
     fd = open(filename, O_RDONLY);
-    long long cur_size = 0;
     long long start = my_rdtsc();
-    while (cur_size < size) {
-      cur_size += read(fd, buf, BUFFER_SIZE);
-      printf("%lld\n", cur_size);
+    while (read(fd, buf, BLOCK_SIZE) > 0) {
     }
     long long end = my_rdtsc();
-    duration += end - start;
+    rbw[i] = end - start;
     close(fd);
   }
+  qsort(rbw, times + 20, sizeof(long long), cmp_ll);
+  double res = 0;
+  for (int i = 10; i < times + 10; i++) {
+    res += (double)size / rbw[i] / times;
+  }
   unlink(filename);
-  return (double)(times * size) / (double)(duration);
+  free(rbw);
+  return res;
+}
+double file_read_rand(char *buf, long long size, int times, int flag) {
+  char filename[] = "fsbench";
+  // Create file of size (B)
+  int fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, (mode_t)0600);
+  if (fd == -1) {
+    perror("Error opening file for writing");
+    return -1;
+  }
+  // if (fcntl(fd, 0x30, 1) == -1) {
+  //   printf("File cache disabled failed\n");
+  // }
+  int re = lseek(fd, size - 1, SEEK_SET);
+  if (re == -1) {
+    close(fd);
+    perror("Error calling lseek() to 'stretch' the file");
+    return -1;
+  }
+  re = write(fd, "", 1);
+  if (re < 0) {
+    close(fd);
+    perror("Error writing a byte at the end of the file");
+    return -1;
+  }
+  close(fd);
+
+  long long *rbw = (long long *)malloc(sizeof(long long) * (times + 20));
+  int blknums = size / BLOCK_SIZE;
+  int *offsets = (int *)malloc(sizeof(int) * (blknums));
+  for (int i = 0; i < times + 20; ++i) {
+    fd = open(filename, O_RDONLY);
+    if (flag) {
+      for (int b = 0; b < blknums; ++b) {
+        offsets[b] = rand() % blknums;
+      }
+      long long start = my_rdtsc();
+      for (int b = 0; b < blknums; ++b) {
+        lseek(fd, offsets[b] * BLOCK_SIZE, SEEK_SET);
+        read(fd, buf, BLOCK_SIZE);
+      }
+      long long end = my_rdtsc();
+      rbw[i] = end - start;
+    } else {
+      long long start = my_rdtsc();
+      for (int b = 0; b < blknums; ++b) {
+        read(fd, buf, BLOCK_SIZE);
+      }
+      long long end = my_rdtsc();
+      rbw[i] = end - start;
+    }
+    close(fd);
+  }
+  qsort(rbw, times + 20, sizeof(long long), cmp_ll);
+  double res = 0;
+  for (int i = 10; i < times + 10; i++) {
+    res += (double)blknums / rbw[i] / times;
+  }
+  unlink(filename);
+  free(rbw);
+  free(offsets);
+  return res;
 }
