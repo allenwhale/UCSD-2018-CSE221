@@ -38,29 +38,36 @@ void memory_access_runner() {
 }
 
 void bandwidth_runner() {
-  // testing 8MB,
-  int times = 100;
+// testing 8MB,
+#define TIMES 10
   long long mem_size = 1 << 13;
-  for (int k = 0; k < times + 4; ++k) {
-    if (fork() == 0) {
+  double bandwidth[TIMES];
+  for (int s = 1; s <= 64; s <<= 1) {
+    for (int k = 0; k < TIMES + 4; ++k) {
       if (k >= 4) {
-        printf("%f\n", memory_read_bandwidth(mem_size, 1));
+        bandwidth[k - 4] = memory_read_bandwidth(mem_size, s, 1);
       }
-      exit(0);
-    } else {
-      wait(0);
     }
+    sort(bandwidth, TIMES);
+    double sum = 0;
+    for (int m = 3; m < 8; ++m) {
+      sum += bandwidth[m];
+    }
+    printf("%f\n", sum / 5);
   }
 
-  for (int k = 0; k < times + 4; ++k) {
-    if (fork() == 0) {
+  for (int s = 1; s <= 64; s <<= 1) {
+    for (int k = 0; k < TIMES + 4; ++k) {
       if (k >= 4) {
-        printf("%f\n", memory_write_bandwidth(mem_size, 1));
+        bandwidth[k - 4] = memory_write_bandwidth(mem_size, s, 1);
       }
-      exit(0);
-    } else {
-      wait(0);
     }
+    sort(bandwidth, TIMES);
+    double sum = 0;
+    for (int m = 3; m < 8; ++m) {
+      sum += bandwidth[m];
+    }
+    printf("%f\n", sum / 5);
   }
 }
 
@@ -81,6 +88,6 @@ void pagefault_runner() {
 }
 
 int main() {
-  memory_access_runner();
+  bandwidth_runner();
   return 0;
 }

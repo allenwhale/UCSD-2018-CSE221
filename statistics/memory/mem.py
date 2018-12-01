@@ -27,15 +27,16 @@ def memorylatency():
 
 
 def memrwLatency():
-    FILENAME = 'mem_rw_latency'
+    FILENAME = 'mem_rw_step_lin_all'
     data = list(map(float, open(FILENAME, 'r').readlines()))
     fig = plt.figure()
-    rdata = data[:100]
-    wdata = data[100:]
-    sns.kdeplot(
-        rdata, label=f'read(B/us): mean({round(np.mean(rdata), 6)}), std({round(np.std(rdata), 6)})')
-    sns.kdeplot(
-        wdata, label=f'write(B/us): mean({round(np.mean(wdata), 6)}), std({round(np.std(wdata), 6)})')
+    size = 7
+    plt.xlabel('step size (B)')
+    plt.xticks(np.arange(size), [1 << i for i in np.arange(size)])
+    plt.ylabel('bandwidth (MB/s)')
+    sns.lineplot(x=np.arange(size), y=data[:size], label="read")
+    sns.lineplot(x=np.arange(size), y=data[size:], label="write")
+
     fig.savefig(f'{FILENAME}.png')
 
 
@@ -49,4 +50,4 @@ def pagefaultLatency():
 
 
 if __name__ == '__main__':
-    memorylatency()
+    memrwLatency()
