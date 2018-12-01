@@ -1,7 +1,6 @@
 #include "fs.h"
 
-double file_read_time(char *buf, long long size, int times) {
-  char filename[] = "fsbench";
+double file_read_time(char *buf, char *filename, long long size, int times) {
   // Create file of size (B)
   int fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, (mode_t)0600);
   if (fd == -1) {
@@ -102,4 +101,26 @@ double file_read_rand(char *buf, long long size, int times, int flag) {
   free(rbw);
   free(offsets);
   return res;
+}
+
+void file_contention(int numOfProcesses, int times) {
+  char **fnames = (char **)malloc(sizeof(char *) * numOfProcesses);
+  for (int i = 0; i < numOfProcesses; ++i) {
+    fnames[i] = (char *)malloc(sizeof(char) * 128);
+    sprintf(fnames[i], "fs_%d", i);
+  }
+  for (int i = 0; i < numOfProcesses; ++i) {
+    pid_t pid;
+    if ((pid = fork()) == 0) {
+      char *buf = (char *)malloc(sizeof(char) * BLOCK_SIZE);
+      printf("%f\n", file_read_time(buf, fnames[i], BLOCK_SIZE, times));
+      exit(0);
+    } else {
+    }
+  }
+  wait(0);
+  for (int i = 0; i < numOfProcesses; ++i) {
+    free(fnames[i]);
+  }
+  free(fnames);
 }

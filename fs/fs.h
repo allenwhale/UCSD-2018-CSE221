@@ -8,7 +8,7 @@
 #define BLOCK_SIZE (1 << 12)
 #define F_NOCACHE 0x30
 
-double file_read_time(char*, long long, int);
+double file_read_time(char*, char*, long long, int);
 double file_read_rand(char*, long long, int, int);
-
+void file_contention(int, int);
 #endif
