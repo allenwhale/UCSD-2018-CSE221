@@ -7,5 +7,6 @@
 long long my_rdtsc();
 
 void sort(double*, int);
+int cmp_ll(const void*, const void *);
 
 #endif
