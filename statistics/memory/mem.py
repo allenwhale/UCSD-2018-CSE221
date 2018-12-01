@@ -27,7 +27,7 @@ def memorylatency():
 
 
 def memrwLatency():
-    FILENAME = 'mem_rw_step_lin_all'
+    FILENAME = 'mem_rw_step_osx'
     data = list(map(float, open(FILENAME, 'r').readlines()))
     fig = plt.figure()
     size = 7
