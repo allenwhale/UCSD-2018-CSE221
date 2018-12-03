@@ -7,7 +7,7 @@ double measure_overhead(int times) {
 
   for (int i = 0; i < times; i++) {
     long long start = my_rdtsc();
-    long long end   = my_rdtsc();
+    long long end = my_rdtsc();
     total += end - start;
   }
   return total / (double)times;
@@ -35,55 +35,55 @@ void procedure_call_overhead(int times, double* ans) {
     test0();
   }
   long long end = my_rdtsc();
-  ans[0]        = (end - start) / (double)times;
+  ans[0] = (end - start) / (double)times;
 
   start = my_rdtsc();
   for (int i = 0; i < times; i++) {
     test1(1);
   }
-  end    = my_rdtsc();
+  end = my_rdtsc();
   ans[1] = (end - start) / (double)times;
 
   start = my_rdtsc();
   for (int i = 0; i < times; i++) {
     test2(1, 2);
   }
-  end    = my_rdtsc();
+  end = my_rdtsc();
   ans[2] = (end - start) / (double)times;
 
   start = my_rdtsc();
   for (int i = 0; i < times; i++) {
     test3(1, 2, 3);
   }
-  end    = my_rdtsc();
+  end = my_rdtsc();
   ans[3] = (end - start) / (double)times;
 
   start = my_rdtsc();
   for (int i = 0; i < times; i++) {
     test4(1, 2, 3, 4);
   }
-  end    = my_rdtsc();
+  end = my_rdtsc();
   ans[4] = (end - start) / (double)times;
 
   start = my_rdtsc();
   for (int i = 0; i < times; i++) {
     test5(1, 2, 3, 4, 5);
   }
-  end    = my_rdtsc();
+  end = my_rdtsc();
   ans[5] = (end - start) / (double)times;
 
   start = my_rdtsc();
   for (int i = 0; i < times; i++) {
     test6(1, 2, 3, 4, 5, 6);
   }
-  end    = my_rdtsc();
+  end = my_rdtsc();
   ans[6] = (end - start) / (double)times;
 
   start = my_rdtsc();
   for (int i = 0; i < times; i++) {
     test7(1, 2, 3, 4, 5, 6, 7);
   }
-  end    = my_rdtsc();
+  end = my_rdtsc();
   ans[7] = (end - start) / (double)times;
 }
 
@@ -148,7 +148,7 @@ long long process_context_switch_once_overhead() {
 }
 
 double process_context_switch_overhead(int times) {
-  int i        = 0;
+  int i = 0;
   double total = 0.;
 
   while (i < times) {
@@ -161,7 +161,7 @@ double process_context_switch_overhead(int times) {
   return total / (double)times;
 }
 void* thread_context_switch(void* arg) {
-  int* fd       = (int*)arg;
+  int* fd = (int*)arg;
   long long end = my_rdtsc();
 
   write(fd[1], &end, sizeof(end));
@@ -181,7 +181,7 @@ long long thread_context_switch_once_overhead() {
   return end - start;
 }
 double thread_context_switch_overhead(int times) {
-  int i        = 0;
+  int i = 0;
   double total = 0.;
 
   while (i < times) {
